@@ -1,0 +1,28 @@
+des_cblock		T_BYTES
+des_key_schedule	T_BYTES
+struct des_ks_struct *	T_DES_SCHED_PTR
+des_cblock *		T_BYTES_PTR
+
+INPUT
+T_BYTES_PTR
+	if (SvOK($arg) && SvCUR($arg) == sizeof(*$var))
+	    $var = ($type) SvPV($arg, na);
+	else
+	    croak(\"$var must be exactly %lu bytes long\", (unsigned long) sizeof(*$var))
+
+T_DES_SCHED_PTR
+	if (SvOK($arg) && SvCUR($arg) == sizeof(des_key_schedule))
+	    $var = ($type) SvPV($arg, na);
+	else
+	    croak(\"$var must be exactly %lu bytes long\",
+		  (unsigned long) sizeof(des_key_schedule))
+
+OUTPUT
+T_BYTES
+	sv_setpvn($arg, (char *) $var, sizeof($var));
+
+T_BYTES_PTR
+	UNIMPLEMENTED
+
+T_DES_SCHED_PTR
+	UNIMPLEMENTED

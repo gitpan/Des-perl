@@ -1,0 +1,145 @@
+=head1 NAME
+
+Des - Des extension module for Perl
+
+=head1 DESCRIPTION
+
+The Des extension module gives access to the DES library.
+
+The following is a brief and over-simplified description of the relevant
+stuff about DES.
+
+DES keys are 8-byte blocks. A key is passed to a perl function as an
+8-byte string. Before keys can be used to encrypt or decrypt data,
+the key needs to be transformed into a key schedule using the function
+I<set_key>. There is a certain amount of overhead in creating these
+key schedules (which are 128 bytes or 256 bytes depending on implementation
+and architecture) so they can be created and cached for later if desired.
+Encryption and decryption can be done in 3 modes:
+
+=over 8
+
+=item ECB (electronic code book) mode
+
+Takes a des_cblock (perl 8-byte string) and produces another des_cblock.
+(Very rarely useful for large amounts of plain text, subject to known
+plaintext attacks under certain circumstances, only slightly faster than
+CBC or PCBC mode, and you lose even this advantage in perl).
+
+=item CBC (cipher block chaining) mode
+
+Takes an arbitrary length string, pads it out (internally) on the right
+with NULs to a multiple of 8-bytes. Encrypts/decrypts the data and produces
+output (same size as padded input) which is an exact multiple of 8 bytes
+long. Changing a single bit of the cleartext affects I<all> the following
+ciphertext. However, changing a single bit of the ciphertext affects only
+the corresponding cleartext block and the following block. This is
+occasionally an advantage but is usually a disadvantage.
+
+=item PCBC mode
+
+A modified CBC mode with indefinite proagation of single bit errors both
+from cleartext to ciphertext I<and> from ciphertext to cleartext.
+"Usually" the best mode (for certain values of "usually").
+
+=back
+
+=head2 Functions imported by I<use Des>.
+
+=over 8
+
+=item string_to_key (STRING)
+
+Takes an arbitrary STRING and munges it (with a one-way function) into
+a DES key, which is returned.
+
+=item set_key (KEY)
+
+The DES key KEY (which must be a string of exactly 8 bytes) is turned into
+a key schedule which is returned.
+
+=item ecb_encrypt (INPUT, SCHEDULE)
+
+The INPUT argument (which must be a string of exactly 8 bytes) is
+encrypted using ECB mode using key schedule SCHEDULE (created using
+I<set_key>) and the resulting 8-byte string is returned.
+
+=item ecb_decrypt (INPUT, SCHEDULE)
+
+The INPUT argument (which must be a string of exactly 8 bytes) is
+decrypted using ECB mode using key schedule SCHEDULE (created using
+I<set_key>) and the resulting 8-byte string is returned.
+
+=item cbc_encrypt (INPUT, OUTPUT, SCHEDULE, IV)
+
+The INPUT argument can be of arbitrary length, although it will be
+internally padded on the right with NULs to the nearest multiple of 8 bytes.
+INPUT is taken and encrypted using CBC mode with key schedule SCHEDULE
+and initialisation vector IV. If OUTPUT is not I<undef> then it assumed
+to be an lvalue which is grown (if necessary) and receives the encrypted
+output. Whether or not OUTPUT is I<undef>, the output is also available
+as the return value of the function.
+
+=item cbc_decrypt (INPUT, OUTPUT, SCHEDULE, IV)
+
+The INPUT argument can be of arbitrary length, although it will be
+internally padded on the right with NULs to the nearest multiple of 8 bytes.
+INPUT is taken and decrypted using CBC mode with key schedule SCHEDULE
+and initialisation vector IV. If OUTPUT is not I<undef> then it assumed
+to be an lvalue which is grown (if necessary) and receives the decrypted
+output. Whether or not OUTPUT is I<undef>, the output is also available
+as the return value of the function.
+
+=item pcbc_encrypt (INPUT, OUTPUT, SCHEDULE, IV)
+
+The INPUT argument can be of arbitrary length, although it will be
+internally padded on the right with NULs to the nearest multiple of 8 bytes.
+INPUT is taken and encrypted using PCBC mode with key schedule SCHEDULE
+and initialisation vector IV. If OUTPUT is not I<undef> then it assumed
+to be an lvalue which is grown (if necessary) and receives the encrypted
+output. Whether or not OUTPUT is I<undef>, the output is also available
+as the return value of the function.
+
+=item pcbc_decrypt (INPUT, OUTPUT, SCHEDULE, IV)
+
+The INPUT argument can be of arbitrary length, although it will be
+internally padded on the right with NULs to the nearest multiple of 8 bytes.
+INPUT is taken and decrypted using PCBC mode with key schedule SCHEDULE
+and initialisation vector IV. If OUTPUT is not I<undef> then it assumed
+to be an lvalue which is grown (if necessary) and receives the decrypted
+output. Whether or not OUTPUT is I<undef>, the output is also available
+as the return value of the function.
+
+=item pcbc_cksum (INPUT, SCHEDULE, IV)
+
+The INPUT argument can be of arbitrary length, although it will be
+internally padded on the right with NULs to the nearest multiple of 8 bytes.
+CBC mode is used to generate an 8-byte cryptographic checksum using
+key schedule SCHEDULE and initialisation vector IV. This checksum
+is returned.
+
+=back
+
+=head2 Functions in package Des which can be imported
+
+=over 8
+
+=item random_key ()
+
+Produces a random DES key based on current time, PID and a counter.
+
+=item read_password (PROMPT [, VERIFY])
+
+Prints PROMPT on the terminal, turns off echo if possible and reads a
+password from the keyboard. If the optional VERIFY argument is present
+and true than the password is prompted for a second time and the two
+are compared. If different, the prompting is repeated. The resulting
+string is turned into a DES key (using I<string_to_key> (q.v.) internally)
+and that key is returned.
+
+=back
+
+=head2 AUTHOR
+
+Malcolm Beattie, F<mbeattie@sable.ox.ac.uk>, 6 Dec 1994.
+
